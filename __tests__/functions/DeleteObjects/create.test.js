@@ -8,10 +8,13 @@ describe('DeleteObjects#create', () => {
 
     const Enabled = faker.random.arrayElement(['true', 'false']);
 
+    const RoleArn = faker.random.uuid();
+
     const event = {
       ResourceProperties: {
         BucketName,
         Enabled,
+        RoleArn,
       },
     };
 

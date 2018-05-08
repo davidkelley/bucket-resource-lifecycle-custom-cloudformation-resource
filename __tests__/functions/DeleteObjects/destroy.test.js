@@ -9,9 +9,12 @@ describe('DeleteObjects#destroy', () => {
   describe('when the request is successful', () => {
     const BucketName = faker.random.uuid();
 
+    const RoleArn = faker.random.uuid();
+
     const event = {
       ResourceProperties: {
         BucketName,
+        RoleArn,
         Enabled: faker.random.arrayElement(['true', 'false']),
       },
     };
@@ -46,6 +49,34 @@ describe('DeleteObjects#destroy', () => {
 
     describe('when Enabled is true', () => {
       beforeEach(() => { event.ResourceProperties.Enabled = 'true'; });
+
+      const credentials = () => ({
+        AccessKeyId: faker.random.uuid(),
+        SecretAccessKey: faker.random.uuid(),
+        SessionToken: faker.random.uuid(),
+      });
+
+      const mockedSTSAssumeRole = jest.fn((params, cb) => cb(null, {
+        Credentials: credentials(),
+      }));
+
+      beforeEach(() => {
+        AWS.mock('STS', 'assumeRole', mockedSTSAssumeRole);
+      });
+
+      afterEach(() => {
+        AWS.restore('STS');
+      });
+
+      afterEach(() => {
+        expect(mockedSTSAssumeRole).toHaveBeenCalledTimes(1);
+        expect(mockedSTSAssumeRole).toHaveBeenCalledWith(expect.objectContaining({
+          RoleSessionName: process.env.AWS_LAMBDA_FUNCTION_NAME,
+          ExternalId: process.env.AWS_LAMBDA_FUNCTION_NAME,
+          RoleArn,
+        }), expect.any(Function));
+        mockedSTSAssumeRole.mockClear();
+      });
 
       describe('when there are <1000 objects', () => {
         const numOfObjects = faker.random.number({ min: 1, max: 999 });

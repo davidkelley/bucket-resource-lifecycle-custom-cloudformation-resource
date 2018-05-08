@@ -6,7 +6,9 @@ const LIST_OBJECTS = 'listObjectsV2';
 
 const DELETE_OBJECTS = 'deleteObjects';
 
-const client = async (op, params) => new S3({ region: AWS_REGION })[op](params).promise();
+const client = async (op, params, defaults = {}) => (
+  new S3({ region: AWS_REGION, ...defaults })[op](params).promise()
+);
 
 const paginator = async (op, params) => {
   const {
@@ -20,11 +22,12 @@ const paginator = async (op, params) => {
   return [Contents];
 };
 
-export const paginate = async Bucket => paginator(LIST_OBJECTS, { Bucket });
+export const paginate = (defaults = {}) => (
+  async Bucket => paginator(LIST_OBJECTS, { Bucket }, defaults)
+);
 
-export const destroy = async (Bucket, Objects) => client(DELETE_OBJECTS, {
-  Bucket,
-  Delete: {
-    Objects,
-  },
-});
+export const destroy = (defaults = {}) => (
+  async (Bucket, Objects) => client(DELETE_OBJECTS, {
+    Bucket, Delete: { Objects },
+  }, defaults)
+);
