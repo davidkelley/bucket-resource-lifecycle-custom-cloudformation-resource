@@ -13,7 +13,7 @@ Resources:
 
   DeleteLifecycle:
     DependsOn:
-      - DeleteObjectsFunctionRole
+      - DeleteObjectsFunctionPolicy
     Type: Custom::DeleteObjects
     Properties:
       Enabled: true
@@ -35,15 +35,20 @@ Resources:
               StringEquals:
                 sts:ExternalId: !ImportValue DeleteObjectsFunction
             Action: sts:AssumeRole
-      Policies:
-        - PolicyName: EmptyBucketPermissions
-          PolicyDocument:
-            Version: 2012-10-17
-            Statement:
-              - Effect: Allow
-                Action:
-                  - s3:DeleteObject
-                  - s3:ListBucket
-                Resource:
-                  - !Sub "arn:${AWS::Partition}:s3:::${Bucket}"
-                  - !Sub "arn:${AWS::Partition}:s3:::${Bucket}/*"
+
+  DeleteObjectsFunctionPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: AssumePermissions
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - s3:DeleteObject*
+              - s3:ListBucket
+            Resource:
+              - !Sub "arn:${AWS::Partition}:s3:::${Bucket}"
+              - !Sub "arn:${AWS::Partition}:s3:::${Bucket}/*"
+      Roles:
+        - !Ref DeleteObjectsFunctionRole
