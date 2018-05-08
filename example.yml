@@ -28,7 +28,7 @@ Resources:
         Statement:
           - Effect: Allow
             Principal:
-              AWS: !ImportValue DeleteObjectsFunctionArn
+              AWS: !ImportValue DeleteObjectsFunctionExecutionRoleArn
             Condition:
               StringEquals:
                 sts:ExternalId: !ImportValue DeleteObjectsFunction
