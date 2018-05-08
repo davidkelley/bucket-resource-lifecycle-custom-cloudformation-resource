@@ -10,7 +10,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       Handler: DeleteObjects.handler
-      Runtime: nodejs8.10
+      Runtime: nodejs6.10
       CodeUri: ./out
       Timeout: 300
       Role: !GetAtt DeleteObjectsFunctionExecutionRole.Arn

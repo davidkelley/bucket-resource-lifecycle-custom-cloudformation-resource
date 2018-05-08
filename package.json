@@ -4,7 +4,7 @@
   "private": true,
   "main": "functions",
   "engines": {
-    "node": ">=8.10"
+    "node": ">=6.10"
   },
   "dependencies": {
     "aws-sdk": "^2.6.7",
