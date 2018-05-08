@@ -12,6 +12,8 @@ Parameters:
 Resources:
 
   DeleteLifecycle:
+    DependsOn:
+      - DeleteObjectsFunctionRole
     Type: Custom::DeleteObjects
     Properties:
       Enabled: true
