@@ -1,0 +1,86 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+Transform: AWS::Serverless-2016-10-31
+
+Description: "[CloudFormation] [Utility] Bucket Resource Lifecycle"
+
+Resources:
+
+  DeleteObjectsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: DeleteObjects.handler
+      Runtime: nodejs8.10
+      CodeUri: ./out
+      Timeout: 300
+      Role: !GetAtt DeleteObjectsFunctionExecutionRole.Arn
+      Environment:
+        Variables:
+          NODE_ENV: production
+
+  DeleteObjectsFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/${DeleteObjectsFunction}"
+      RetentionInDays: 1
+
+  DeleteObjectsFunctionExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: "/"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service:
+                - !Sub "lambda.${AWS::URLSuffix}"
+            Action: sts:AssumeRole
+
+  DeleteObjectsFunctionExecutionPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: AssumePermissions
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - logs:CreateLogGroup
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+            Resource:
+              - !GetAtt DeleteObjectsFunctionLogGroup.Arn
+          - Effect: Allow
+            Action:
+              - sts:AssumeRole
+            Resource:
+              - !Sub "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/*"
+      Roles:
+        - !Ref DeleteObjectsFunctionExecutionRole
+
+Outputs:
+
+  DeleteObjectsFunction:
+    Description: Function Name for Custom Resource
+    Value: !Ref DeleteObjectsFunction
+    Export:
+      Name: !Sub "DeleteObjectsFunction"
+
+  DeleteObjectsFunctionArn:
+    Description: Function ARN for Custom Resource
+    Value: !GetAtt DeleteObjectsFunction.Arn
+    Export:
+      Name: !Sub "DeleteObjectsFunctionArn"
+
+  DeleteObjectsFunctionExecutionRole:
+    Description: Name of the IAM Role for deleting objects
+    Value: !Ref DeleteObjectsFunctionExecutionRole
+    Export:
+      Name: DeleteObjectsFunctionExecutionRole
+
+  DeleteObjectsFunctionExecutionRoleArn:
+    Description: ARN of the IAM Role for deleting objects
+    Value: !GetAtt DeleteObjectsFunctionExecutionRole.Arn
+    Export:
+      Name: DeleteObjectsFunctionExecutionRoleArn

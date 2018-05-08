@@ -1,0 +1,57 @@
+{
+  "name": "bucket-resource-lifecycle",
+  "version": "0.0.1",
+  "private": true,
+  "main": "functions",
+  "engines": {
+    "node": ">=8.10"
+  },
+  "dependencies": {
+    "aws-sdk": "^2.6.7",
+    "babel-runtime": "6.26.0",
+    "cfn-response": "^1.0.1"
+  },
+  "devDependencies": {
+    "aws-sdk-mock": "^2.0.0",
+    "babel-cli": "^6.26.0",
+    "babel-eslint": "^8.2.2",
+    "babel-loader": "^7.1.4",
+    "babel-plugin-module-resolver": "^3.1.1",
+    "babel-plugin-transform-object-rest-spread": "^6.26.0",
+    "babel-plugin-transform-runtime": "^6.23.0",
+    "babel-preset-env": "^1.6.1",
+    "babel-preset-es2015": "^6.24.1",
+    "babel-preset-stage-1": "^6.24.1",
+    "eslint": "^4.19.1",
+    "eslint-config-airbnb": "^16.1.0",
+    "eslint-import-resolver-babel-module": "^4.0.0",
+    "eslint-plugin-import": "^2.9.0",
+    "eslint-plugin-jsx-a11y": "^6.0.3",
+    "eslint-plugin-react": "^7.7.0",
+    "faker": "~4.1.0",
+    "jest": "^23.0.0-alpha.0",
+    "pre-commit": "^1.2.2",
+    "uglifyjs-webpack-plugin": "^1.2.4",
+    "webpack": "^4.2.0",
+    "webpack-cli": "^2.0.13"
+  },
+  "pre-commit": [
+    "lint",
+    "build"
+  ],
+  "jest": {
+    "moduleFileExtensions": [
+      "js"
+    ],
+    "transform": {
+      "\\.js$": "babel-jest"
+    },
+    "setupTestFrameworkScriptFile": "<rootDir>/__tests__/__utils__/setup.js"
+  },
+  "scripts": {
+    "build": "webpack --progress --colors",
+    "test": "NODE_ENV=test jest __tests__/.+/*.test.js --notify",
+    "lint": "eslint __tests__ functions webpack.config.js",
+    "lint:fix": "eslint --fix $1"
+  }
+}
