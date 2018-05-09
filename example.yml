@@ -45,10 +45,11 @@ Resources:
         Statement:
           - Effect: Allow
             Action:
+              - s3:DeleteObject
               - s3:DeleteObject*
-              - s3:ListBucket
+              - s3:List*
             Resource:
               - !Sub "arn:${AWS::Partition}:s3:::${Bucket}"
-              - !Sub "arn:${AWS::Partition}:s3:::${Bucket}/*"
+              - !Sub "arn:${AWS::Partition}:s3:::${Bucket}*"
       Roles:
         - !Ref DeleteObjectsFunctionRole
