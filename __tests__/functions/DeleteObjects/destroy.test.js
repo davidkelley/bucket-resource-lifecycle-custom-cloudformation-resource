@@ -19,7 +19,10 @@ describe('DeleteObjects#destroy', () => {
       },
     };
 
-    const generator = () => ({ Key: faker.random.uuid() });
+    const generator = () => ({
+      Key: faker.random.uuid(),
+      VersionId: faker.random.uuid(),
+    });
 
     describe('when Enabled is false', () => {
       beforeEach(() => { event.ResourceProperties.Enabled = 'false'; });
@@ -87,10 +90,15 @@ describe('DeleteObjects#destroy', () => {
           cb(null, { Contents: contents })
         ));
 
+        const mockedListObjectVersions = jest.fn((params, cb) => (
+          cb(null, { Versions: contents, IsTruncated: false })
+        ));
+
         const mockedDeleteObjects = jest.fn((params, cb) => cb(null, {}));
 
         beforeEach(() => {
           AWS.mock('S3', 'listObjectsV2', mockedListObjectsV2);
+          AWS.mock('S3', 'listObjectVersions', mockedListObjectVersions);
           AWS.mock('S3', 'deleteObjects', mockedDeleteObjects);
         });
 
@@ -104,7 +112,8 @@ describe('DeleteObjects#destroy', () => {
             id: `${process.env.AWS_REGION}:${BucketName}`,
           }));
           expect(mockedListObjectsV2).toHaveBeenCalledTimes(1);
-          expect(mockedDeleteObjects).toHaveBeenCalledTimes(1);
+          expect(mockedListObjectVersions).toHaveBeenCalledTimes(1);
+          expect(mockedDeleteObjects).toHaveBeenCalledTimes(2);
           expect(mockedDeleteObjects).toHaveBeenCalledWith(expect.objectContaining({
             Bucket: BucketName,
             Delete: expect.objectContaining({
@@ -125,7 +134,7 @@ describe('DeleteObjects#destroy', () => {
           Array(MAX_PER_PAGE).fill(1).map(generator)
         ));
 
-        const iterator = pages => (params, cb) => {
+        const objectIterator = pages => (params, cb) => {
           const { ContinuationToken = 0 } = params;
           const continuation = parseInt(ContinuationToken, 10);
           const token = continuation + 1;
@@ -135,12 +144,27 @@ describe('DeleteObjects#destroy', () => {
           cb(null, { Contents, ...next });
         };
 
-        const mockedListObjectsV2 = jest.fn(iterator(contents));
+        const versionIterator = pages => (params, cb) => {
+          const { KeyMarker = 0 } = params;
+          const continuation = parseInt(KeyMarker, 10);
+          const token = continuation + 1;
+          const NextKeyMarker = token.toString();
+          const Versions = pages[continuation];
+          const IsTruncated = token < pages.length;
+          cb(null, {
+            Versions, NextKeyMarker, IsTruncated, NextVersionIdMarker: '0',
+          });
+        };
+
+        const mockedListObjectsV2 = jest.fn(objectIterator(contents));
+
+        const mockedListObjectVersions = jest.fn(versionIterator(contents));
 
         const mockedDeleteObjects = jest.fn((params, cb) => cb(null, {}));
 
         beforeEach(() => {
           AWS.mock('S3', 'listObjectsV2', mockedListObjectsV2);
+          AWS.mock('S3', 'listObjectVersions', mockedListObjectVersions);
           AWS.mock('S3', 'deleteObjects', mockedDeleteObjects);
         });
 
@@ -148,13 +172,14 @@ describe('DeleteObjects#destroy', () => {
           AWS.restore('S3');
         });
 
-        it('responds correctly', async () => {
+        it.only('responds correctly', async () => {
           const response = await destroy(event);
           expect(response).toEqual(expect.objectContaining({
             id: `${process.env.AWS_REGION}:${BucketName}`,
           }));
           expect(mockedListObjectsV2).toHaveBeenCalledTimes(numOfPages);
-          expect(mockedDeleteObjects).toHaveBeenCalledTimes(numOfPages);
+          expect(mockedListObjectVersions).toHaveBeenCalledTimes(numOfPages);
+          expect(mockedDeleteObjects).toHaveBeenCalledTimes(numOfPages * 2);
           expect(mockedDeleteObjects).toHaveBeenCalledWith(expect.objectContaining({
             Bucket: BucketName,
             Delete: expect.objectContaining({
